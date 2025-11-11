@@ -1,0 +1,16 @@
+{
+  "name": "tweet_tube",
+  "version": "1.0.0",
+  "description": "a video + tweet backend app",
+  "keywords": [
+    "js",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Saumya Jha",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
