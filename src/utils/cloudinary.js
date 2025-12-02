@@ -30,6 +30,8 @@ async function uploadOnCloudinary(localPath) {
             console.log("Failed to delete the local file : " , localPath );
         }
 
+        return uploadResponse;
+
     } catch (error) {
         
         // localPath to hai , but upload nai ho paya , isliye retry ke liye rkh rhe hai file
