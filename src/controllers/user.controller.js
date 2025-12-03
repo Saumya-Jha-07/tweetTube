@@ -11,14 +11,15 @@ export const registerUser = asyncHandler(async (req, res) => {
   // step 2 : upload the file to local server ( done using middleware )
 
   // step 3 : validate the deatils
-  if (userName.trim() === "") throw new ApiError(400, "Username is missing !");
-  if (fullName.trim() === "") throw new ApiError(400, "fullName is missing !");
-  if (email.trim() === "") throw new ApiError(400, "email is missing !");
-  if (password.trim() === "") throw new ApiError(400, "password is missing !");
+  if (userName === "") throw new ApiError(400, "Username is missing !");
+  if (fullName === "") throw new ApiError(400, "fullName is missing !");
+  if (email === "") throw new ApiError(400, "email is missing !");
+  if (password === "") throw new ApiError(400, "password is missing !");
 
   // step 4 : check if user already exists
-  const existedUser = User.findOne({ userName });
-  if (existedUser) throw new ApiError(409, "Username already exists ");
+  const existedUser = await User.findOne({ userName });
+  if (existedUser)
+    throw new ApiError(409, "User with username already exists ");
 
   // step 5 : check for images/files locally
   const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -51,5 +52,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user!");
 
   // step 10 : return the user
-  return new ApiResponse(201, createdUser, "User registered successfully !");
+  return res
+    .status(201)
+    .json(new ApiResponse(201, createdUser, "User registered successfully !"));
 });
