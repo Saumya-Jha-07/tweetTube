@@ -4,6 +4,27 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+async function generateAccessAndRefreshTokens(user) {
+  try {
+    // step 3
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // step 4
+    user.refreshToken = refreshToken;
+    await user.save({
+      validateBeforeSave: true,
+    });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating JWT tokens !",
+    );
+  }
+}
+
 export const registerUser = asyncHandler(async (req, res) => {
   // step 1 : get the user text details
   const { userName, fullName, email, password } = req.body;
@@ -77,20 +98,13 @@ export const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(401, "User with this email does not exist!");
 
-  const hashedPassword = user.password;
-  const isMatch = await user.isPasswordCorrect(hashedPassword);
+  const isMatch = await user.isPasswordCorrect(password);
 
   if (!isMatch) throw new ApiError(401, "Password is incorrect!");
 
-  // step 3
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
-
-  console.log("Access token : ", accessToken);
-  console.log("Refresh token : ", refreshToken);
-
-  // step 4
-  await User.updateOne({ _id: user._id }, { $set: { refreshToken } });
+  // step 3 and 4
+  const { accessToken, refreshToken } =
+    await generateAccessAndRefreshTokens(user);
 
   // step 5 and 6
   const options = {
@@ -98,13 +112,15 @@ export const loginUser = asyncHandler(async (req, res) => {
     secure: true,
   };
 
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken",
+  );
+
   return res
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .status(200)
-    .json({
-      message: "Login successfull",
-    });
+    .json(new ApiResponse(200, loggedInUser, "User loggedIn successful !"));
 });
 
 // export const refreshUser = asyncHandler(async (req, res) => {});
