@@ -123,8 +123,49 @@ export const loginUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, loggedInUser, "User loggedIn successful !"));
 });
 
-// export const refreshUser = asyncHandler(async (req, res) => {});
+export const logoutUser = asyncHandler(async (req, res) => {
+  // step 1
+  const cookies = req.cookies;
+  console.log(cookies);
+  if (!cookies)
+    return res
+      .status(204)
+      .json(new ApiResponse(204, cookies, "User is already loggedOut !"));
 
-// export const logoutUser = asyncHandler(async (req, res) => {
+  // step 2
+  const refreshToken = cookies?.refreshToken;
+  if (!refreshToken)
+    return res
+      .status(204)
+      .json(new ApiResponse(204, cookies, "User is already loggedOut !"));
+
+  // step 3
+  const user = await User.findOne({ refreshToken });
+
+  // step 4
+  if (user) {
+    user.refreshToken = undefined;
+    await user.save({ validateBeforeSave: false });
+  }
+
+  // step 5
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, cookies, "User logout successfully !"));
+});
+
+// export const refreshUser = asyncHandler(async (req, res) => {
+//   // step 1
+//   const cookies = req.cookies;
+//   if (!cookies) throw new ApiError(401, "User not authenticated !");
+
+//   const refreshToken = cookies?.refreshToken;
+//   if (!refreshToken) throw new ApiError(401, "User not authenticated !");
 
 // });
