@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 async function generateAccessAndRefreshTokens(user) {
   try {
@@ -142,12 +143,47 @@ export const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logged out!"));
 });
 
-// export const refreshUser = asyncHandler(async (req, res) => {
-//   // step 1
-//   const cookies = req.cookies;
-//   if (!cookies) throw new ApiError(401, "User not authenticated !");
+export const refreshUser = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies?.refreshToken;
+  if (!incomingRefreshToken)
+    throw new ApiError(401, "User not authenticated !");
 
-//   const refreshToken = cookies?.refreshToken;
-//   if (!refreshToken) throw new ApiError(401, "User not authenticated !");
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    );
 
-// });
+    const user = await User.findById(decodedToken?._id);
+    if (!user) throw new ApiError(401, "Invalid refresh Token!");
+
+    if (user?.refreshToken !== incomingRefreshToken)
+      throw new ApiError(401, "Refresh Token expired or used!");
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user);
+
+    // generate method khud kr rha hai ye
+
+    // user.refreshToken = newRefreshToken;
+    // await user.save();
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed!",
+        ),
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid refresh Token!");
+  }
+});
