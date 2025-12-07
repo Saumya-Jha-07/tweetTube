@@ -201,7 +201,7 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
   if (!isPasswordCorrect) throw new ApiError(400, "Invalid old password!");
 
-  user.password = oldPassword;
+  user.password = newPassword;
   await user.save({ validateBeforeSave: false });
 
   return res
@@ -212,7 +212,7 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
 export const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
-    .json(200, req.user, "current user fetched successfully!");
+    .json(new ApiResponse(200, req.user, "current user fetched successfully!"));
 });
 
 export const updateAccountDetails = asyncHandler(async (req, res) => {
