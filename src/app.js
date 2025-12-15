@@ -18,8 +18,10 @@ app.use(cookieParser());
 
 // import routers
 import userRouter from "./routes/user.routes.js";
+import healthCheckRouter from "./routes/healthchecker.routes.js";
 
 // handling routes
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/healthCheck", healthCheckRouter);
 
 export { app };
