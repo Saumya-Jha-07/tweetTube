@@ -19,9 +19,11 @@ app.use(cookieParser());
 // import routers
 import userRouter from "./routes/user.routes.js";
 import healthCheckRouter from "./routes/healthchecker.routes.js";
+import tweetRouter from "./routes/tweet.routes.js";
 
 // handling routes
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/healthCheck", healthCheckRouter);
+app.use("/api/v1/tweets", tweetRouter);
 
 export { app };
