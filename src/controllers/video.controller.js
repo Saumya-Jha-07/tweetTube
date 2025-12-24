@@ -10,7 +10,48 @@ import {
 
 const getAllVideos = asyncHandler(async (req, res) => {});
 
-const publishAVideo = asyncHandler(async (req, res) => {});
+const publishAVideo = asyncHandler(async (req, res) => {
+  const { title, description } = req.body;
+
+  const trimmedTitle = title?.trim();
+  const trimmedDescription = description?.trim();
+
+  if (!trimmedTitle || !trimmedDescription)
+    throw new ApiError(400, "Title or description is missing!");
+
+  const videoFileLocalPath = req.files?.videoFile[0]?.path;
+  const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
+
+  if (!videoFileLocalPath)
+    throw new ApiError(400, "Video File is missing from local server!");
+  if (!thumbnailLocalPath)
+    throw new ApiError(400, "Thumbnail is missing from local server!");
+
+  const videoFile = await uploadOnCloudinary(videoFileLocalPath);
+  const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+  if (!videoFile)
+    throw new ApiError(400, "Video file not uploaded on cloudinary!");
+  if (!thumbnail)
+    throw new ApiError(400, "Thumbnail not uplaoded on cloudinary!");
+
+  const video = await Video.create({
+    videoFile: videoFile.url,
+    thumbnail: thumbnail.url,
+    owner: req.user._id,
+    title: trimmedTitle,
+    description: trimmedDescription,
+    duration: videoFile.duration,
+    isPublished: true,
+  });
+
+  if (!video)
+    throw new ApiError(500, "Something went wrong while publishing video");
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, video, "Video published successfully!"));
+});
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
